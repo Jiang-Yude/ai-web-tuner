@@ -31,6 +31,24 @@
 
 入口頁：[tuners/index.html](tuners/index.html)
 
+## 長什麼樣
+
+**配色校稿器**：六組方向並排挑，挑中再用 HSL 微調，複製 CSS 變數。
+
+![配色校稿器](screenshots/palette.jpg)
+
+**位置校稿器**：貼任意圖片網址，雙預覽加滑桿加方向鍵細調。
+
+![位置校稿器](screenshots/position.jpg)
+
+**字級校稿器**：桌機手機與中英預覽，兩級標題，複製 clamp()。
+
+![字級校稿器](screenshots/type-scale.jpg)
+
+**光暈校稿器**：在預覽區移動滑鼠看光暈，HSL 加色卡加透明度半徑。
+
+![光暈校稿器](screenshots/color-glow.jpg)
+
 ## 怎麼用
 
 1. 把這個 repo 下載或 clone 下來。
