@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>位置校稿器 · AI 網頁微調術</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#f5f0e8;padding:40px 24px;color:#2b2a26}
+  .wrap{max-width:1000px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:1px}
+  .sub{margin-top:8px;color:#7a7264;font-size:15px;margin-bottom:24px}
+  .urlbar{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap}
+  .urlbar input{flex:1;min-width:240px;padding:9px 12px;border:1px solid #e0d6c0;border-radius:8px;font-size:14px}
+  .urlbar button{background:#c9a961;color:#fff;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:14px}
+  .layout{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap}
+  .preview-box{background:#fff;border:1px solid #e0d6c0;border-radius:16px;padding:24px;box-shadow:0 6px 24px rgba(43,42,38,.08)}
+  .frame{border-radius:50%;background-repeat:no-repeat;box-shadow:0 4px 14px rgba(43,42,38,.2)}
+  .frame.real{width:96px;height:96px}
+  .frame.big{width:230px;height:230px;margin-top:20px}
+  .shape{display:flex;gap:10px;margin-top:16px}
+  .shape button{flex:1;background:#fbf5e4;border:1px solid #c9a961;color:#5a4a3a;border-radius:7px;padding:6px;font-size:12px;cursor:pointer}
+  .shape button.on{background:#c9a961;color:#fff}
+  .controls{background:#fff;border:1px solid #e0d6c0;border-radius:16px;padding:24px;min-width:330px;flex:1}
+  .keys{background:#fbf5e4;border:1px dashed #c9a961;border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.8;color:#5a4a3a;margin-bottom:16px}
+  kbd{background:#fff;border:1px solid #c9a961;border-radius:4px;padding:1px 6px;font-family:monospace;font-size:12px}
+  .row{margin-bottom:15px}
+  .lab{font-size:13px;color:#5a4a3a;margin-bottom:6px;display:flex;justify-content:space-between}
+  .lab .val{font-family:monospace;color:#8B6508;font-weight:700}
+  input[type=range]{width:100%;accent-color:#c9a961}
+  .css-out{background:#2b2a26;color:#fbf5e4;border-radius:8px;padding:12px 14px;font-family:monospace;font-size:12.5px;word-break:break-all;margin-top:14px;user-select:all}
+  .copy{background:#c9a961;color:#fff;border:none;padding:9px 16px;border-radius:7px;font-weight:600;cursor:pointer;margin-top:10px}
+  .copy.done{background:#a9863f}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>位置校稿器</h1>
+  <p class="sub">圖片在框裡偏掉、頭像切到臉、元件位置不對的時候用。拉滑桿或按方向鍵即時對位，複製 CSS 貼回。</p>
+  <div class="urlbar">
+    <input id="url" type="text" placeholder="貼上你的圖片網址" value="https://picsum.photos/id/64/600/600">
+    <button id="load">載入圖片</button>
+  </div>
+  <div class="layout">
+    <div class="preview-box">
+      <div class="frame real" id="real" tabindex="0"></div>
+      <div class="frame big" id="big"></div>
+      <div class="shape">
+        <button data-r="50%" class="on">圓形</button>
+        <button data-r="16px">圓角</button>
+        <button data-r="0">方形</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="keys"><strong>鍵盤</strong>（先點左邊小框）<br>
+        <kbd>↑↓←→</kbd> 移動 2%　<kbd>Shift+方向</kbd> 細調 0.5%<br>
+        <kbd>+</kbd>/<kbd>-</kbd> 縮放 10%　<kbd>R</kbd> 重置</div>
+      <div class="row"><div class="lab">X 位置 <span class="val" id="xv">50%</span></div><input type="range" id="x" min="-100" max="200" value="50" step="0.5"></div>
+      <div class="row"><div class="lab">Y 位置 <span class="val" id="yv">50%</span></div><input type="range" id="y" min="-200" max="200" value="50" step="0.5"></div>
+      <div class="row"><div class="lab">縮放 <span class="val" id="zv">cover</span></div><input type="range" id="z" min="50" max="800" value="100" step="5"></div>
+      <div class="css-out" id="out"></div>
+      <button class="copy" id="copy">複製 CSS</button>
+    </div>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let x=50,y=50,zoom=100,img=$('url').value;
+function setImg(u){img=u;['real','big'].forEach(id=>$(id).style.backgroundImage=`url("${u}")`);}
+function apply(){
+  const pos=`${x}% ${y}%`, size=zoom===100?'cover':`${zoom}% auto`;
+  ['real','big'].forEach(id=>{$(id).style.backgroundPosition=pos;$(id).style.backgroundSize=size;});
+  $('xv').textContent=x+'%';$('yv').textContent=y+'%';$('zv').textContent=zoom===100?'cover':zoom+'%';
+  $('x').value=x;$('y').value=y;$('z').value=zoom;
+  const sz=zoom===100?'':`background-size: ${size}; `;
+  $('out').textContent=`${sz}background-position: ${pos};`;
+}
+$('x').oninput=e=>{x=+e.target.value;apply();};
+$('y').oninput=e=>{y=+e.target.value;apply();};
+$('z').oninput=e=>{zoom=+e.target.value;apply();};
+$('real').addEventListener('keydown',e=>{
+  const s=e.shiftKey?0.5:2;
+  if(e.key==='ArrowUp')y=Math.max(-200,y-s);
+  else if(e.key==='ArrowDown')y=Math.min(200,y+s);
+  else if(e.key==='ArrowLeft')x=Math.max(-100,x-s);
+  else if(e.key==='ArrowRight')x=Math.min(200,x+s);
+  else if(e.key==='+'||e.key==='=')zoom=Math.min(800,zoom+10);
+  else if(e.key==='-')zoom=Math.max(50,zoom-10);
+  else if(e.key==='r'||e.key==='R'){x=50;y=50;zoom=100;}
+  else return;
+  e.preventDefault();apply();
+});
+$('load').onclick=()=>setImg($('url').value);
+$('url').addEventListener('keydown',e=>{if(e.key==='Enter')setImg($('url').value);});
+document.querySelectorAll('.shape button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.shape button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  ['real','big'].forEach(id=>$(id).style.borderRadius=b.dataset.r);
+});
+$('copy').onclick=()=>{navigator.clipboard.writeText($('out').textContent);const b=$('copy');b.textContent='已複製 ✓';b.classList.add('done');setTimeout(()=>{b.textContent='複製 CSS';b.classList.remove('done')},1200);};
+setImg(img);apply();$('real').focus();
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配色校稿器 · AI 網頁微調術</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#f4f1ea;color:#2e2a24;padding:40px 24px}
+  .wrap{max-width:1120px;margin:0 auto}
+  h1{font-size:26px;letter-spacing:1px}
+  .sub{margin-top:8px;color:#7a7264;font-size:15px}
+  .step{display:inline-block;font-size:13px;color:#9a8f7c;border:1px solid #d9d0bf;border-radius:20px;padding:4px 13px;margin:28px 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{border-radius:14px;overflow:hidden;cursor:pointer;border:2px solid transparent;background:#fff;box-shadow:0 4px 16px rgba(0,0,0,.06);transition:transform .15s,border-color .15s}
+  .card:hover{transform:translateY(-3px)}
+  .card.active{border-color:#48b178;box-shadow:0 8px 26px rgba(72,177,120,.26)}
+  .swatch{height:84px;display:flex}.swatch span{flex:1}
+  .card-body{padding:13px 15px;position:relative}
+  .card-name{font-size:14px;color:#6b6253;margin-bottom:8px}
+  .mini-btn{display:inline-block;font-size:12px;padding:5px 13px;border-radius:7px;color:#fff}
+  .pick{position:absolute;top:13px;right:14px;font-size:12px;color:#48b178;font-weight:700}
+  .reroll{margin-top:14px;background:none;border:1px solid #d9d0bf;color:#7a7264;padding:7px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+  .panel{margin-top:16px;background:#fff;border-radius:16px;box-shadow:0 6px 22px rgba(0,0,0,.08);padding:24px 28px;display:grid;grid-template-columns:340px 1fr;gap:30px;align-items:center}
+  .preview{border-radius:12px;padding:26px 20px;text-align:center;transition:background .1s}
+  .preview h3{font-size:19px;margin-bottom:9px}.preview p{font-size:13px;opacity:.85;margin-bottom:15px}
+  .preview .btn{display:inline-block;padding:9px 20px;border-radius:9px;color:#fff;font-size:14px}
+  .sliders h4{font-size:15px;margin-bottom:14px;color:#4a4438}
+  .row{display:flex;align-items:center;gap:12px;margin-bottom:13px}
+  .row label{width:78px;font-size:13px;color:#7a7264}
+  .row input[type=range]{flex:1;accent-color:#48b178}
+  .row .val{width:42px;font-size:12px;color:#4a4438;text-align:right;font-family:ui-monospace,monospace}
+  .copy{margin-top:6px;background:#48b178;color:#fff;border:none;padding:11px 0;width:100%;border-radius:9px;font-size:15px;cursor:pointer}
+  .copy.done{background:#3a8f60}
+  .code{margin-top:12px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#5a5346;background:#f7f4ec;border-radius:8px;padding:11px 13px;user-select:all;word-break:break-all}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>配色校稿器</h1>
+  <p class="sub">配色配不到、AI 一直猜的時候用。先看六組方向挑一個，挑中再用滑桿微調，定稿一鍵複製。</p>
+
+  <div class="step">第一步　六組方向並排，挑一個</div>
+  <div class="grid" id="grid"></div>
+  <button class="reroll" id="reroll">換一批六組方向</button>
+
+  <div class="step">第二步　挑中那組，微調到剛好</div>
+  <div class="panel">
+    <div class="preview" id="prev">
+      <h3>標題範例</h3>
+      <p>挑中的配色即時套在版面上預覽</p>
+      <span class="btn" id="prevBtn">範例按鈕</span>
+    </div>
+    <div class="sliders">
+      <h4 id="tuneName">微調中</h4>
+      <div class="row"><label>主色 色相</label><input type="range" id="h" min="0" max="360" value="150"><span class="val" id="hv">150</span></div>
+      <div class="row"><label>主色 飽和</label><input type="range" id="s" min="0" max="100" value="45"><span class="val" id="sv">45</span></div>
+      <div class="row"><label>主色 明度</label><input type="range" id="l" min="20" max="75" value="48"><span class="val" id="lv">48</span></div>
+      <div class="row"><label>底色 明度</label><input type="range" id="bg" min="80" max="98" value="92"><span class="val" id="bgv">92</span></div>
+      <div class="row"><label>文字 明度</label><input type="range" id="tx" min="8" max="40" value="18"><span class="val" id="txv">18</span></div>
+      <button class="copy" id="copy">複製 CSS 變數</button>
+      <div class="code" id="code"></div>
+    </div>
+  </div>
+</div>
+<script>
+function hueName(h){h=((h%360)+360)%360;
+  if(h<18||h>=336)return "赤紅";if(h<45)return "暖橙";if(h<66)return "明黃";
+  if(h<160)return "青綠";if(h<200)return "湖水綠";if(h<255)return "天藍";
+  if(h<290)return "靛紫";if(h<336)return "紫紅";return "赤紅";}
+const $=id=>document.getElementById(id);
+let state={h:150,s:45,l:48,bg:92,tx:18,hue0:150};
+
+function hsl(h,s,l){return `hsl(${h}deg ${s}% ${l}%)`}
+// 從一個主色相，生出一組協調的 主色/底色/文字
+function paletteFrom(hue,sat,lig,bgl,txl){
+  return {main:hsl(hue,sat,lig), bg:hsl(hue,Math.round(sat*0.4),bgl), text:hsl(hue,Math.round(sat*0.5),txl), hue,sat,lig,bgl,txl};
+}
+function buildGrid(seed){
+  const grid=$('grid'); grid.innerHTML='';
+  // 六個不同色相方向
+  const hues=[];
+  for(let i=0;i<6;i++){ hues.push((seed + i*61)%360); }
+  hues.forEach((hue,i)=>{
+    const sat=38+((hue+i)%18), lig=46+((i*7)%10);
+    const p=paletteFrom(hue,sat,lig,92,18);
+    const card=document.createElement('div');
+    card.className='card'+(i===0?' active':'');
+    card.innerHTML=`<div class="swatch"><span style="background:${p.bg}"></span><span style="background:${p.main}"></span><span style="background:${p.text}"></span></div>
+      <div class="card-body">${i===0?'<span class="pick">✓ 已選</span>':''}<div class="card-name">第 ${i+1} 組　${hueName(hue)}</div><span class="mini-btn" style="background:${p.main}">範例按鈕</span></div>`;
+    card.onclick=()=>{ document.querySelectorAll('.card').forEach(c=>{c.classList.remove('active');const pk=c.querySelector('.pick');if(pk)pk.remove();});
+      card.classList.add('active'); const b=card.querySelector('.card-body'); const s=document.createElement('span');s.className='pick';s.textContent='✓ 已選';b.prepend(s);
+      loadInto(p, hueName(hue)); };
+    grid.appendChild(card);
+    if(i===0) loadInto(p, hueName(hue));
+  });
+}
+function loadInto(p,name){
+  state.h=p.hue;state.s=p.sat;state.l=p.lig;state.bg=p.bgl;state.tx=p.txl;
+  $('h').value=p.hue;$('s').value=p.sat;$('l').value=p.lig;$('bg').value=p.bgl;$('tx').value=p.txl;
+  $('tuneName').textContent=name+'　微調中';
+  apply();
+}
+function apply(){
+  state.h=+$('h').value;state.s=+$('s').value;state.l=+$('l').value;state.bg=+$('bg').value;state.tx=+$('tx').value;
+  ['h','s','l','bg','tx'].forEach(k=>$(k+'v').textContent=$(k).value);
+  const main=hsl(state.h,state.s,state.l), bg=hsl(state.h,Math.round(state.s*0.4),state.bg), text=hsl(state.h,Math.round(state.s*0.5),state.tx);
+  const pv=$('prev'); pv.style.background=bg; pv.style.color=text; $('prevBtn').style.background=main;
+  // 轉成 hex 方便複製
+  $('code').textContent=`--main:${toHex(main)}; --bg:${toHex(bg)}; --text:${toHex(text)};`;
+}
+function toHex(hslStr){
+  const m=hslStr.match(/hsl\((\d+)deg (\d+)% (\d+)%\)/); if(!m)return hslStr;
+  let h=+m[1]/360,s=+m[2]/100,l=+m[3]/100;
+  const f=n=>{const k=(n+h*12)%12,a=s*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))));};
+  const hx=n=>f(n).toString(16).padStart(2,'0');
+  return `#${hx(0)}${hx(8)}${hx(4)}`;
+}
+['h','s','l','bg','tx'].forEach(k=>$(k).oninput=apply);
+$('copy').onclick=()=>{navigator.clipboard.writeText($('code').textContent);const b=$('copy');b.textContent='已複製 ✓';b.classList.add('done');setTimeout(()=>{b.textContent='複製 CSS 變數';b.classList.remove('done')},1200);};
+let seed=150;
+$('reroll').onclick=()=>{seed=(seed+47)%360;buildGrid(seed);};
+buildGrid(seed);
+</script>
+</body>
+</html>

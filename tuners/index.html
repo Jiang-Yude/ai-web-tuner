@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 網頁微調術 · 校稿器入口</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;background:#f4f1ea;color:#2e2a24;padding:56px 24px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:32px;letter-spacing:1px}
+  .lead{margin-top:12px;color:#7a7264;font-size:16px;line-height:1.7;max-width:620px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:36px}
+  a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #e3dac8;border-radius:16px;padding:24px 26px;box-shadow:0 6px 22px rgba(107,74,42,.07);transition:transform .15s,box-shadow .15s}
+  a.card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(107,74,42,.13)}
+  .dot{width:40px;height:40px;border-radius:11px;margin-bottom:14px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .card h2{font-size:19px;margin-bottom:7px}
+  .card p{font-size:14px;color:#7a7264;line-height:1.6}
+  .foot{margin-top:40px;font-size:13px;color:#9a8f7c;line-height:1.7}
+  .foot a{color:#48b178}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AI 網頁微調術</h1>
+  <p class="lead">用 AI 做網頁，卡關的總是那些肉眼才看得出對不對的小地方。遇到這種微調，不要讓 AI 一直猜，打開對應的校稿器自己拉到滿意，複製 CSS 貼回。</p>
+  <div class="grid">
+    <a class="card" href="palette-tuner.html"><div class="dot" style="background:#e6f0e5">🎨</div><h2>配色校稿器</h2><p>配色配不到、一直猜。六組方向並排挑，挑中再微調，複製 CSS 變數。</p></a>
+    <a class="card" href="position-tuner.html"><div class="dot" style="background:#f3e7d0">🎯</div><h2>位置校稿器</h2><p>圖片偏掉、頭像切到臉、元件大小。雙預覽＋滑桿＋方向鍵細調。</p></a>
+    <a class="card" href="type-scale-tuner.html"><div class="dot" style="background:#e4e9ee">🔡</div><h2>字級校稿器</h2><p>標題桌機好看手機爆行。桌機手機與中英預覽，兩級字級，複製 clamp。</p></a>
+    <a class="card" href="color-glow-tuner.html"><div class="dot" style="background:#eae6f1">✨</div><h2>光暈校稿器</h2><p>滑鼠光暈、陰影、accent 色太強太淡。HSL＋色卡＋透明度半徑。</p></a>
+  </div>
+  <p class="foot">核心原則：肉眼才判斷得出的微調，建工具讓自己拉，不要 AI 反覆猜值。來回試兩三次還沒定案，就該給校稿器了。<br>
+  方法說明見 <a href="../SKILL.md">SKILL.md</a>　·　作者 江昱德（江江教練）　·　MIT License</p>
+</div>
+</body>
+</html>
